@@ -110,6 +110,8 @@ class _WebViewFaceLivenessState extends State<WebViewFaceLiveness> {
   }
 
   void _initializeWebView() {
+    if (!_urlInitialized) return; // Wait for URL to be initialized
+    
     controller =
         WebViewController()
           ..setJavaScriptMode(JavaScriptMode.unrestricted)

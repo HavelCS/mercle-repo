@@ -5,39 +5,40 @@ import 'auth_service.dart';
 import 'face_matching_service.dart';
 
 class BackgroundJobService {
-  static const String _baseUrl = 'http://localhost:8000/api';
+  static const String _baseUrl = 'http://34.204.239.76:3001/api';
   static const String _jobsEndpoint = '/jobs';
-  
+
   static Timer? _pollingTimer;
   static bool _isPolling = false;
-  
+
   // Job status callbacks
-  static Function(String jobId, String status, Map<String, dynamic> data)? onJobStatusUpdate;
+  static Function(String jobId, String status, Map<String, dynamic> data)?
+  onJobStatusUpdate;
   static Function(String jobId, Map<String, dynamic> result)? onJobCompleted;
   static Function(String jobId, String error)? onJobFailed;
-  
+
   // Start background polling for all user jobs
   static void startPolling({Duration interval = const Duration(seconds: 10)}) {
     if (_isPolling) return;
-    
+
     _isPolling = true;
     print('🔄 Starting background job polling...');
-    
+
     _pollingTimer = Timer.periodic(interval, (timer) async {
       await _pollAllJobs();
     });
   }
-  
+
   // Stop background polling
   static void stopPolling() {
     if (!_isPolling) return;
-    
+
     _isPolling = false;
     _pollingTimer?.cancel();
     _pollingTimer = null;
     print('⏹️ Stopped background job polling');
   }
-  
+
   // Get all user jobs
   static Future<Map<String, dynamic>> getAllUserJobs() async {
     try {
@@ -46,10 +47,10 @@ class BackgroundJobService {
         Uri.parse('$_baseUrl$_jobsEndpoint/user'),
         headers: headers,
       );
-      
+
       // Update token if needed
       await AuthService.updateTokenIfNeeded(response);
-      
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return {
@@ -79,7 +80,7 @@ class BackgroundJobService {
       };
     }
   }
-  
+
   // Get specific job status
   static Future<Map<String, dynamic>> getJobStatus(String jobId) async {
     try {
@@ -88,10 +89,10 @@ class BackgroundJobService {
         Uri.parse('$_baseUrl$_jobsEndpoint/$jobId/status'),
         headers: headers,
       );
-      
+
       // Update token if needed
       await AuthService.updateTokenIfNeeded(response);
-      
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return {
@@ -113,10 +114,7 @@ class BackgroundJobService {
           'requiresAuth': true,
         };
       } else if (response.statusCode == 404) {
-        return {
-          'success': false,
-          'message': 'Job not found',
-        };
+        return {'success': false, 'message': 'Job not found'};
       } else {
         final error = json.decode(response.body);
         return {
@@ -131,35 +129,38 @@ class BackgroundJobService {
       };
     }
   }
-  
+
   // Poll all active jobs
   static Future<void> _pollAllJobs() async {
     try {
       final jobsResult = await getAllUserJobs();
-      
+
       if (jobsResult['success'] == true) {
         final jobs = jobsResult['jobs'] as List;
-        
+
         for (final job in jobs) {
           final jobId = job['jobId'];
           final currentStatus = job['status'];
-          
+
           // Only poll active jobs
           if (currentStatus == 'pending' || currentStatus == 'processing') {
             final statusResult = await getJobStatus(jobId);
-            
+
             if (statusResult['success'] == true) {
               final newStatus = statusResult['status'];
-              
+
               // Notify status update
               onJobStatusUpdate?.call(jobId, newStatus, statusResult);
-              
+
               if (newStatus == 'completed') {
                 // Job completed
                 onJobCompleted?.call(jobId, statusResult['result'] ?? {});
               } else if (newStatus == 'failed') {
                 // Job failed
-                onJobFailed?.call(jobId, statusResult['error'] ?? 'Unknown error');
+                onJobFailed?.call(
+                  jobId,
+                  statusResult['error'] ?? 'Unknown error',
+                );
               }
             }
           }
@@ -169,7 +170,7 @@ class BackgroundJobService {
       print('❌ Error polling jobs: $e');
     }
   }
-  
+
   // Monitor specific job until completion
   static Future<Map<String, dynamic>> monitorJob(
     String jobId, {
@@ -177,22 +178,22 @@ class BackgroundJobService {
     Duration pollInterval = const Duration(seconds: 5),
   }) async {
     int attempts = 0;
-    
+
     while (attempts < maxAttempts) {
       attempts++;
       print('🔍 Monitoring job $attempts/$maxAttempts for job: $jobId');
-      
+
       try {
         final statusResult = await getJobStatus(jobId);
-        
+
         if (statusResult['success'] != true) {
           return statusResult; // Return error immediately
         }
-        
+
         final status = statusResult['status'];
         final progress = statusResult['progress'] ?? 0;
         print('📊 Job $jobId status: $status ($progress% complete)');
-        
+
         if (status == 'completed') {
           return {
             'success': true,
@@ -207,16 +208,17 @@ class BackgroundJobService {
             'jobId': jobId,
           };
         }
-        
+
         // Job still in progress (pending/processing)
         if (attempts < maxAttempts) {
-          print('⏳ Job $jobId still $status, waiting ${pollInterval.inSeconds} seconds...');
+          print(
+            '⏳ Job $jobId still $status, waiting ${pollInterval.inSeconds} seconds...',
+          );
           await Future.delayed(pollInterval);
         }
-        
       } catch (e) {
         print('❌ Error monitoring job $jobId attempt $attempts: $e');
-        
+
         // If it's the last attempt, return the error
         if (attempts >= maxAttempts) {
           return {
@@ -225,22 +227,23 @@ class BackgroundJobService {
             'jobId': jobId,
           };
         }
-        
+
         // Otherwise, wait and try again
         if (attempts < maxAttempts) {
           await Future.delayed(pollInterval);
         }
       }
     }
-    
+
     // Timeout reached
     return {
       'success': false,
-      'message': 'Job monitoring timeout after ${maxAttempts * pollInterval.inSeconds} seconds.',
+      'message':
+          'Job monitoring timeout after ${maxAttempts * pollInterval.inSeconds} seconds.',
       'jobId': jobId,
     };
   }
-  
+
   // Cancel a job
   static Future<Map<String, dynamic>> cancelJob(String jobId) async {
     try {
@@ -249,10 +252,10 @@ class BackgroundJobService {
         Uri.parse('$_baseUrl$_jobsEndpoint/$jobId/cancel'),
         headers: headers,
       );
-      
+
       // Update token if needed
       await AuthService.updateTokenIfNeeded(response);
-      
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return {
@@ -267,10 +270,7 @@ class BackgroundJobService {
           'requiresAuth': true,
         };
       } else if (response.statusCode == 404) {
-        return {
-          'success': false,
-          'message': 'Job not found',
-        };
+        return {'success': false, 'message': 'Job not found'};
       } else {
         final error = json.decode(response.body);
         return {

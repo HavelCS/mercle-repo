@@ -61,10 +61,10 @@ class _OtpScreenState extends State<OtpScreen> {
         createdAt: DateTime.now(),
         lastSeen: DateTime.now(),
       );
-      
+
       // Set user in provider
       userProvider.setUser(user);
-      
+
       // Navigate to verification success screen first
       Navigator.pushReplacement(
         context,
@@ -72,7 +72,7 @@ class _OtpScreenState extends State<OtpScreen> {
           builder: (context) => const VerificationSuccessScreen(),
         ),
       );
-      
+
       // After 1.5 seconds, navigate to face scan setup
       Future.delayed(const Duration(milliseconds: 1500), () {
         if (mounted) {
@@ -114,108 +114,110 @@ class _OtpScreenState extends State<OtpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: Padding(
-        padding: EdgeInsets.only(left: 29.w, right: 29.w, top: 110.h),
-        child: Column(
-          children: [
-            Center(child: SvgPicture.asset("assets/images/logo.svg")),
-            SizedBox(height: 110.h),
-            Text(
-              'Enter the code',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 44.sp,
-                fontFamily: 'HandjetRegular',
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            SizedBox(height: 16.h),
-            Text(
-              'We sent a code to ${widget.phoneNumber}, please enter to verify your address',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: const Color(0xFF888888),
-                fontSize: 16.sp,
-                fontFamily: 'Geist',
-                fontWeight: FontWeight.w400,
-                height: 1.45.h,
-                letterSpacing: -0.16,
-              ),
-            ),
-            SizedBox(height: 32.h),
-
-            // OTP input field using custom widget with error state
-            OtpTextField(
-              controller: _otpController,
-              hasError: _hasError,
-              onChanged: (value) {
-                if (_hasError) {
-                  setState(() {
-                    _hasError = false;
-                  });
-                }
-              },
-              onCompleted: (pin) {
-                // Auto-verify when all 6 digits are entered
-                if (pin.length == 6) {
-                  _verifyOTP();
-                }
-              },
-            ),
-            SizedBox(height: 24.h),
-
-            // Verify button
-            SizedBox(
-              width: double.infinity,
-              height: 56.h,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _verifyOTP,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.only(left: 29.w, right: 29.w, top: 110.h),
+          child: Column(
+            children: [
+              Center(child: SvgPicture.asset("assets/images/logo.svg")),
+              SizedBox(height: 110.h),
+              Text(
+                'Enter the code',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 44.sp,
+                  fontFamily: 'HandjetRegular',
+                  fontWeight: FontWeight.w400,
                 ),
-                child:
-                    _isLoading
-                        ? const CircularProgressIndicator(color: Colors.black)
-                        : const Text(
-                          'Verify OTP',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'We sent a code to ${widget.phoneNumber}, please enter to verify your address',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: const Color(0xFF888888),
+                  fontSize: 16.sp,
+                  fontFamily: 'Geist',
+                  fontWeight: FontWeight.w400,
+                  height: 1.45.h,
+                  letterSpacing: -0.16,
+                ),
+              ),
+              SizedBox(height: 32.h),
+
+              // OTP input field using custom widget with error state
+              OtpTextField(
+                controller: _otpController,
+                hasError: _hasError,
+                onChanged: (value) {
+                  if (_hasError) {
+                    setState(() {
+                      _hasError = false;
+                    });
+                  }
+                },
+                onCompleted: (pin) {
+                  // Auto-verify when all 6 digits are entered
+                  if (pin.length == 6) {
+                    _verifyOTP();
+                  }
+                },
+              ),
+              SizedBox(height: 24.h),
+
+              // Verify button
+              SizedBox(
+                width: double.infinity,
+                height: 56.h,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _verifyOTP,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                  ),
+                  child:
+                      _isLoading
+                          ? const CircularProgressIndicator(color: Colors.black)
+                          : const Text(
+                            'Verify OTP',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
+                ),
               ),
-            ),
-            SizedBox(height: 16.h),
+              SizedBox(height: 16.h),
 
-            // Resend OTP button
-            TextButton(
-              onPressed: _isLoading ? null : _resendOTP,
-              child: const Text(
-                'Resend OTP',
-                style: TextStyle(color: Colors.grey),
+              // Resend OTP button
+              TextButton(
+                onPressed: _isLoading ? null : _resendOTP,
+                child: const Text(
+                  'Resend OTP',
+                  style: TextStyle(color: Colors.grey),
+                ),
               ),
-            ),
-            SizedBox(height: 8.h),
+              SizedBox(height: 8.h),
 
-            // Change phone number button
-            TextButton(
-              onPressed:
-                  _isLoading
-                      ? null
-                      : () {
-                        Navigator.pop(context);
-                      },
-              child: const Text(
-                'Change Phone Number',
-                style: TextStyle(color: Colors.grey),
+              // Change phone number button
+              TextButton(
+                onPressed:
+                    _isLoading
+                        ? null
+                        : () {
+                          Navigator.pop(context);
+                        },
+                child: const Text(
+                  'Change Phone Number',
+                  style: TextStyle(color: Colors.grey),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -3,9 +3,9 @@ import 'package:http/http.dart' as http;
 import 'auth_service.dart';
 
 class FaceMatchingService {
-  static const String _baseUrl = 'http://localhost:8000/api';
+  static const String _baseUrl = 'http://34.204.239.76:3001/api';
   static const String _facesEndpoint = '/faces';
-  
+
   // Enqueue face matching job
   static Future<Map<String, dynamic>> enqueueFaceMatching({
     required String faceImage,
@@ -13,23 +13,21 @@ class FaceMatchingService {
   }) async {
     try {
       final headers = await AuthService.getAuthHeaders();
-      final body = {
-        'face_image': faceImage,
-      };
-      
+      final body = {'face_image': faceImage};
+
       if (sessionId != null) {
         body['session_id'] = sessionId;
       }
-      
+
       final response = await http.post(
         Uri.parse('$_baseUrl$_facesEndpoint/matching/enqueue'),
         headers: headers,
         body: json.encode(body),
       );
-      
+
       // Update token if needed
       await AuthService.updateTokenIfNeeded(response);
-      
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return {
@@ -59,19 +57,21 @@ class FaceMatchingService {
       };
     }
   }
-  
+
   // Get face matching job status
-  static Future<Map<String, dynamic>> getFaceMatchingJobStatus(String jobId) async {
+  static Future<Map<String, dynamic>> getFaceMatchingJobStatus(
+    String jobId,
+  ) async {
     try {
       final headers = await AuthService.getAuthHeaders();
       final response = await http.get(
         Uri.parse('$_baseUrl$_facesEndpoint/matching/status/$jobId'),
         headers: headers,
       );
-      
+
       // Update token if needed
       await AuthService.updateTokenIfNeeded(response);
-      
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return {
@@ -90,10 +90,7 @@ class FaceMatchingService {
           'requiresAuth': true,
         };
       } else if (response.statusCode == 404) {
-        return {
-          'success': false,
-          'message': 'Job not found',
-        };
+        return {'success': false, 'message': 'Job not found'};
       } else {
         final error = json.decode(response.body);
         return {
@@ -108,19 +105,21 @@ class FaceMatchingService {
       };
     }
   }
-  
+
   // Get face matching job results
-  static Future<Map<String, dynamic>> getFaceMatchingResults(String jobId) async {
+  static Future<Map<String, dynamic>> getFaceMatchingResults(
+    String jobId,
+  ) async {
     try {
       final headers = await AuthService.getAuthHeaders();
       final response = await http.get(
         Uri.parse('$_baseUrl$_facesEndpoint/matching/results/$jobId'),
         headers: headers,
       );
-      
+
       // Update token if needed
       await AuthService.updateTokenIfNeeded(response);
-      
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return {
@@ -157,7 +156,7 @@ class FaceMatchingService {
       };
     }
   }
-  
+
   // Poll face matching job until completion
   static Future<Map<String, dynamic>> pollFaceMatchingJob(
     String jobId, {
@@ -165,21 +164,25 @@ class FaceMatchingService {
     Duration pollInterval = const Duration(seconds: 5),
   }) async {
     int attempts = 0;
-    
+
     while (attempts < maxAttempts) {
       attempts++;
-      print('🔍 Polling face matching job $attempts/$maxAttempts for job: $jobId');
-      
+      print(
+        '🔍 Polling face matching job $attempts/$maxAttempts for job: $jobId',
+      );
+
       try {
         final statusResult = await getFaceMatchingJobStatus(jobId);
-        
+
         if (statusResult['success'] != true) {
           return statusResult; // Return error immediately
         }
-        
+
         final status = statusResult['status'];
-        print('📊 Job status: $status (${statusResult['progress'] ?? 0}% complete)');
-        
+        print(
+          '📊 Job status: $status (${statusResult['progress'] ?? 0}% complete)',
+        );
+
         if (status == 'completed') {
           // Job completed, get results
           final results = await getFaceMatchingResults(jobId);
@@ -191,16 +194,17 @@ class FaceMatchingService {
             'duplicateDetected': null,
           };
         }
-        
+
         // Job still in progress (pending/processing)
         if (attempts < maxAttempts) {
-          print('⏳ Job still ${status}, waiting ${pollInterval.inSeconds} seconds...');
+          print(
+            '⏳ Job still ${status}, waiting ${pollInterval.inSeconds} seconds...',
+          );
           await Future.delayed(pollInterval);
         }
-        
       } catch (e) {
         print('❌ Error during polling attempt $attempts: $e');
-        
+
         // If it's the last attempt, return the error
         if (attempts >= maxAttempts) {
           return {
@@ -209,22 +213,23 @@ class FaceMatchingService {
             'duplicateDetected': null,
           };
         }
-        
+
         // Otherwise, wait and try again
         if (attempts < maxAttempts) {
           await Future.delayed(pollInterval);
         }
       }
     }
-    
+
     // Timeout reached
     return {
       'success': false,
-      'message': 'Face matching timeout after ${maxAttempts * pollInterval.inSeconds} seconds. Please try again.',
+      'message':
+          'Face matching timeout after ${maxAttempts * pollInterval.inSeconds} seconds. Please try again.',
       'duplicateDetected': null,
     };
   }
-  
+
   // Combined workflow: Enqueue job and poll for results
   static Future<Map<String, dynamic>> matchFaceAndWaitForResults({
     required String faceImage,
@@ -233,20 +238,20 @@ class FaceMatchingService {
     Duration pollInterval = const Duration(seconds: 5),
   }) async {
     print('🚀 Starting face matching workflow...');
-    
+
     // Step 1: Enqueue the job
     final enqueueResult = await enqueueFaceMatching(
       faceImage: faceImage,
       sessionId: sessionId,
     );
-    
+
     if (enqueueResult['success'] != true) {
       return enqueueResult; // Return error if enqueueing failed
     }
-    
+
     final jobId = enqueueResult['jobId'];
     print('✅ Face matching job enqueued with ID: $jobId');
-    
+
     // Step 2: Poll for results
     return await pollFaceMatchingJob(
       jobId,

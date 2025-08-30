@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mercle/constants/colors.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../services/auth_service.dart';
 
 // Face Liveness Result Model
 class FaceLivenessResult {
@@ -59,13 +60,37 @@ class _WebViewFaceLivenessState extends State<WebViewFaceLiveness> {
 
   // Your deployed React Face Liveness app URL
   static const String _faceLivenessUrl =
-      'https://face-liveness-react-dv7o2xss6.vercel.app';
+      'https://face-liveness-react-io419t8ng.vercel.app';
+  
+  String _faceLivenessUrlWithToken = '';
+  bool _urlInitialized = false;
 
   @override
   void initState() {
     super.initState();
     _requestCameraPermission();
-    _initializeWebView();
+    _initializeUrlWithToken();
+  }
+
+  /// Initialize URL with authentication token
+  Future<void> _initializeUrlWithToken() async {
+    try {
+      final token = await AuthService.getToken();
+      if (token != null) {
+        _faceLivenessUrlWithToken = '$_faceLivenessUrl?token=${Uri.encodeComponent(token)}';
+        print('🔑 Face liveness URL with token initialized');
+      } else {
+        _faceLivenessUrlWithToken = _faceLivenessUrl;
+        print('⚠️ No auth token available, using URL without token');
+      }
+      _urlInitialized = true;
+      _initializeWebView();
+    } catch (e) {
+      print('❌ Error initializing URL with token: $e');
+      _faceLivenessUrlWithToken = _faceLivenessUrl;
+      _urlInitialized = true;
+      _initializeWebView();
+    }
   }
 
   Future<void> _requestCameraPermission() async {
@@ -135,7 +160,7 @@ class _WebViewFaceLivenessState extends State<WebViewFaceLiveness> {
               _handleMessageFromReact(message.message);
             },
           )
-          ..loadRequest(Uri.parse(_faceLivenessUrl));
+          ..loadRequest(Uri.parse(_urlInitialized ? _faceLivenessUrlWithToken : _faceLivenessUrl));
   }
 
   /// Set up JavaScript listener for Face Liveness results

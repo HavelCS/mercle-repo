@@ -32,43 +32,45 @@ class _VerificationSuccessScreenState extends State<VerificationSuccessScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: Padding(
-        padding: EdgeInsets.only(left: 29.w, right: 29.w, top: 110.h),
-        child: Column(
-          children: [
-            Center(child: SvgPicture.asset("assets/images/logo.svg")),
-            SizedBox(height: 192.h),
-            Center(
-              child: Container(
-                child: Image.asset("assets/images/thumbsup.png"),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.only(left: 29.w, right: 29.w, top: 110.h),
+          child: Column(
+            children: [
+              Center(child: SvgPicture.asset("assets/images/logo.svg")),
+              SizedBox(height: 192.h),
+              Center(
+                child: Container(
+                  child: Image.asset("assets/images/thumbsup.png"),
+                ),
               ),
-            ),
-            SizedBox(height: 32.h),
-            Text(
-              'Device signature successfully created',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 44.sp,
-                fontFamily: 'HandjetRegular',
-                fontWeight: FontWeight.w400,
-                height: 1.13,
+              SizedBox(height: 32.h),
+              Text(
+                'Device signature successfully created',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 44.sp,
+                  fontFamily: 'HandjetRegular',
+                  fontWeight: FontWeight.w400,
+                  height: 1.13,
+                ),
               ),
-            ),
-            SizedBox(height: 20.h),
-            Text(
-              'This device is now your gateway to\nverified presence',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: const Color(0xFF888888),
-                fontSize: 16.sp,
-                fontFamily: 'GeistRegular',
-                fontWeight: FontWeight.w400,
-                height: 1.45,
-                letterSpacing: -0.16,
+              SizedBox(height: 20.h),
+              Text(
+                'This device is now your gateway to\nverified presence',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: const Color(0xFF888888),
+                  fontSize: 16.sp,
+                  fontFamily: 'GeistRegular',
+                  fontWeight: FontWeight.w400,
+                  height: 1.45,
+                  letterSpacing: -0.16,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

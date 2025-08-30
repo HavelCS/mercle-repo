@@ -3,41 +3,41 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  static const String _baseUrl = 'http://localhost:8000/api';
+  static const String _baseUrl = 'http://34.204.239.76:3001/api';
   static const String _tokenKey = 'access_token';
   static const String _phoneKey = 'user_phone';
   static const String _onboardingCompleteKey = 'onboarding_complete';
-  
+
   // New endpoints from GitHub backend
   static const String _authEndpoint = '/auth';
   static const String _usersEndpoint = '/users';
   static const String _facesEndpoint = '/faces';
-  
+
   // Store JWT token and user phone
   static Future<void> saveAuthData(String token, String phone) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
     await prefs.setString(_phoneKey, phone);
   }
-  
+
   // Get stored JWT token
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_tokenKey);
   }
-  
+
   // Get stored user phone
   static Future<String?> getUserPhone() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_phoneKey);
   }
-  
+
   // Check if user is authenticated
   static Future<bool> isAuthenticated() async {
     final token = await getToken();
     return token != null;
   }
-  
+
   // Clear auth data (logout)
   static Future<void> clearAuthData() async {
     final prefs = await SharedPreferences.getInstance();
@@ -45,65 +45,63 @@ class AuthService {
     await prefs.remove(_phoneKey);
     await prefs.remove(_onboardingCompleteKey);
   }
-  
+
   // Mark onboarding as complete
   static Future<void> completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_onboardingCompleteKey, true);
     print('✅ Onboarding completed!');
   }
-  
+
   // Check if onboarding is complete
   static Future<bool> isOnboardingComplete() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_onboardingCompleteKey) ?? false;
   }
-  
-  
+
   // Get authorization headers
   static Future<Map<String, String>> getAuthHeaders() async {
     final token = await getToken();
-    final headers = {
-      'Content-Type': 'application/json',
-    };
-    
+    final headers = {'Content-Type': 'application/json'};
+
     if (token != null) {
       headers['Authorization'] = 'Bearer $token';
     }
-    
+
     return headers;
   }
-  
+
   // Update token if X-New-Access-Token header is present
   static Future<void> updateTokenIfNeeded(http.Response response) async {
-    final newToken = response.headers['X-New-Access-Token'] ?? 
-                    response.headers['x-new-access-token'];
+    final newToken =
+        response.headers['X-New-Access-Token'] ??
+        response.headers['x-new-access-token'];
     if (newToken != null) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_tokenKey, newToken);
       print('🔄 JWT token refreshed automatically');
     }
   }
-  
+
   // Start OTP verification with invite code
-  static Future<Map<String, dynamic>> startOTP(String phoneNumber, {String? inviteCode}) async {
+  static Future<Map<String, dynamic>> startOTP(
+    String phoneNumber, {
+    String? inviteCode,
+  }) async {
     try {
       final body = {'phone': phoneNumber};
       if (inviteCode != null && inviteCode.isNotEmpty) {
         body['invite_code'] = inviteCode;
       }
-      
+
       final response = await http.post(
         Uri.parse('$_baseUrl/auth/start-otp'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(body),
       );
-      
+
       if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'message': 'OTP sent successfully',
-        };
+        return {'success': true, 'message': 'OTP sent successfully'};
       } else {
         final error = json.decode(response.body);
         return {
@@ -118,25 +116,25 @@ class AuthService {
       };
     }
   }
-  
+
   // Verify OTP and get JWT token
-  static Future<Map<String, dynamic>> verifyOTP(String phoneNumber, String otpCode) async {
+  static Future<Map<String, dynamic>> verifyOTP(
+    String phoneNumber,
+    String otpCode,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/auth/verify-otp'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'phone': phoneNumber,
-          'code': otpCode,
-        }),
+        body: json.encode({'phone': phoneNumber, 'code': otpCode}),
       );
-      
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        
+
         // Save JWT token and phone number
         await saveAuthData(data['access_token'], phoneNumber);
-        
+
         return {
           'success': true,
           'message': 'OTP verified successfully',
@@ -145,10 +143,7 @@ class AuthService {
         };
       } else {
         final error = json.decode(response.body);
-        return {
-          'success': false,
-          'message': error['detail'] ?? 'Invalid OTP',
-        };
+        return {'success': false, 'message': error['detail'] ?? 'Invalid OTP'};
       }
     } catch (e) {
       return {
@@ -157,7 +152,7 @@ class AuthService {
       };
     }
   }
-  
+
   // Get current user profile from new backend
   static Future<Map<String, dynamic>> getCurrentUser() async {
     try {
@@ -166,16 +161,13 @@ class AuthService {
         Uri.parse('$_baseUrl$_usersEndpoint/me'),
         headers: headers,
       );
-      
+
       // Update token if needed
       await updateTokenIfNeeded(response);
-      
+
       if (response.statusCode == 200) {
         final userData = json.decode(response.body);
-        return {
-          'success': true,
-          'user': userData,
-        };
+        return {'success': true, 'user': userData};
       } else if (response.statusCode == 401) {
         // Token expired or invalid - clear auth data
         await clearAuthData();
@@ -185,10 +177,7 @@ class AuthService {
           'requiresAuth': true,
         };
       } else {
-        return {
-          'success': false,
-          'message': 'Failed to fetch user data',
-        };
+        return {'success': false, 'message': 'Failed to fetch user data'};
       }
     } catch (e) {
       return {
@@ -197,7 +186,7 @@ class AuthService {
       };
     }
   }
-  
+
   // Create liveness session using new backend structure
   static Future<Map<String, dynamic>> createLivenessSession() async {
     try {
@@ -206,16 +195,13 @@ class AuthService {
         Uri.parse('$_baseUrl$_facesEndpoint/liveness/create-session'),
         headers: headers,
       );
-      
+
       // Update token if needed
       await updateTokenIfNeeded(response);
-      
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return {
-          'success': true,
-          'sessionId': data['sessionId'],
-        };
+        return {'success': true, 'sessionId': data['sessionId']};
       } else if (response.statusCode == 401) {
         await clearAuthData();
         return {
@@ -237,9 +223,10 @@ class AuthService {
       };
     }
   }
-  
+
   // Process face liveness results (authenticated)
-  static Future<Map<String, dynamic>> processFaceLivenessResults(String sessionId, {
+  static Future<Map<String, dynamic>> processFaceLivenessResults(
+    String sessionId, {
     double? confidence,
     bool? isLive,
     List<String>? auditImages,
@@ -258,10 +245,10 @@ class AuthService {
           'faceImage': faceImage,
         }),
       );
-      
+
       // Update token if needed
       await updateTokenIfNeeded(response);
-      
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return {
@@ -270,7 +257,10 @@ class AuthService {
           'isNewFace': data['isNewFace'],
           'userId': data['userId'],
           'confidence': data['confidence'],
-          'livenessScore': data.containsKey('livenessScore') ? data['livenessScore'] : data['confidence'],
+          'livenessScore':
+              data.containsKey('livenessScore')
+                  ? data['livenessScore']
+                  : data['confidence'],
           'message': data['message'],
         };
       } else if (response.statusCode == 401) {
@@ -294,9 +284,11 @@ class AuthService {
       };
     }
   }
-  
+
   // Process liveness results using new backend structure
-  static Future<Map<String, dynamic>> processLivenessResults(String sessionId) async {
+  static Future<Map<String, dynamic>> processLivenessResults(
+    String sessionId,
+  ) async {
     try {
       final headers = await getAuthHeaders();
       final response = await http.post(
@@ -304,10 +296,10 @@ class AuthService {
         headers: headers,
         body: json.encode({'sessionId': sessionId}),
       );
-      
+
       // Update token if needed
       await updateTokenIfNeeded(response);
-      
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return {
@@ -338,7 +330,7 @@ class AuthService {
       };
     }
   }
-  
+
   // Check user verification status
   static Future<Map<String, dynamic>> getUserVerificationStatus() async {
     try {
@@ -347,16 +339,17 @@ class AuthService {
         Uri.parse('$_baseUrl$_usersEndpoint/verification-status'),
         headers: headers,
       );
-      
+
       // Update token if needed
       await updateTokenIfNeeded(response);
-      
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return {
           'success': true,
           'status': data['status'], // new, pending, verified, failed, rejected
-          'verificationStage': data['verificationStage'], // phone, face, document, complete
+          'verificationStage':
+              data['verificationStage'], // phone, face, document, complete
           'lastUpdated': data['lastUpdated'],
           'details': data['details'],
         };
@@ -381,7 +374,7 @@ class AuthService {
       };
     }
   }
-  
+
   // Update user verification status
   static Future<Map<String, dynamic>> updateUserVerificationStatus({
     required String status,
@@ -390,27 +383,25 @@ class AuthService {
   }) async {
     try {
       final headers = await getAuthHeaders();
-      final Map<String, dynamic> body = {
-        'status': status,
-      };
-      
+      final Map<String, dynamic> body = {'status': status};
+
       if (verificationStage != null) {
         body['verificationStage'] = verificationStage;
       }
-      
+
       if (details != null) {
         body['details'] = details;
       }
-      
+
       final response = await http.post(
         Uri.parse('$_baseUrl$_usersEndpoint/update-verification-status'),
         headers: headers,
         body: json.encode(body),
       );
-      
+
       // Update token if needed
       await updateTokenIfNeeded(response);
-      
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return {
@@ -439,19 +430,20 @@ class AuthService {
       };
     }
   }
-  
+
   // Check if user needs face verification
   static Future<bool> needsFaceVerification() async {
     final statusResult = await getUserVerificationStatus();
     if (statusResult['success'] == true) {
       final status = statusResult['status'];
       final stage = statusResult['verificationStage'];
-      return status == 'new' || status == 'pending' || 
-             (status == 'verified' && stage != 'complete');
+      return status == 'new' ||
+          status == 'pending' ||
+          (status == 'verified' && stage != 'complete');
     }
     return false; // Default to false if we can't determine status
   }
-  
+
   // Process liveness results with polling for duplicate detection
   static Future<Map<String, dynamic>> processLivenessResultsWithPolling(
     String sessionId, {
@@ -459,18 +451,20 @@ class AuthService {
     Duration pollInterval = const Duration(seconds: 5),
   }) async {
     int attempts = 0;
-    
+
     while (attempts < maxAttempts) {
       attempts++;
-      print('🔍 Polling attempt $attempts/$maxAttempts for session: $sessionId');
-      
+      print(
+        '🔍 Polling attempt $attempts/$maxAttempts for session: $sessionId',
+      );
+
       try {
         final result = await processLivenessResults(sessionId);
-        
+
         // If successful, return the result
         if (result['success'] == true) {
           final isNewFace = result['isNewFace'];
-          
+
           if (isNewFace == false) {
             // Face matched - existing user detected
             return {
@@ -495,7 +489,7 @@ class AuthService {
             };
           }
         }
-        
+
         // If not successful but no error, continue polling
         if (result['success'] == false && result['message'] != null) {
           if (result['message'].toString().toLowerCase().contains('expired') ||
@@ -504,10 +498,9 @@ class AuthService {
             return result;
           }
         }
-        
       } catch (e) {
         print('❌ Error during polling attempt $attempts: $e');
-        
+
         // If it's the last attempt, return the error
         if (attempts >= maxAttempts) {
           return {
@@ -517,18 +510,21 @@ class AuthService {
           };
         }
       }
-      
+
       // Wait before next poll (unless it's the last attempt)
       if (attempts < maxAttempts) {
-        print('⏳ Waiting ${pollInterval.inSeconds} seconds before next poll...');
+        print(
+          '⏳ Waiting ${pollInterval.inSeconds} seconds before next poll...',
+        );
         await Future.delayed(pollInterval);
       }
     }
-    
+
     // Timeout reached
     return {
       'success': false,
-      'message': 'Face verification timeout after ${maxAttempts * pollInterval.inSeconds} seconds. Please try again.',
+      'message':
+          'Face verification timeout after ${maxAttempts * pollInterval.inSeconds} seconds. Please try again.',
       'duplicateDetected': null,
     };
   }

@@ -3,11 +3,9 @@ import '../../../services/auth_service.dart';
 
 class FaceVerificationScreen extends StatefulWidget {
   final String sessionId;
-  
-  const FaceVerificationScreen({
-    Key? key,
-    required this.sessionId,
-  }) : super(key: key);
+
+  const FaceVerificationScreen({Key? key, required this.sessionId})
+    : super(key: key);
 
   @override
   State<FaceVerificationScreen> createState() => _FaceVerificationScreenState();
@@ -17,7 +15,7 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
-  
+
   bool _isVerifying = true;
   String _statusMessage = 'Verifying your face...';
   Map<String, dynamic>? _verificationResult;
@@ -27,22 +25,18 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen>
   @override
   void initState() {
     super.initState();
-    
+
     // Set up loading animation
     _animationController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     );
-    _animation = Tween<double>(
-      begin: 0,
-      end: 1,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
-    
+    _animation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
     _animationController.repeat();
-    
+
     // Start face verification polling
     _startFaceVerification();
   }
@@ -73,7 +67,6 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen>
       });
 
       _handleVerificationResult(result);
-      
     } catch (e) {
       setState(() {
         _isVerifying = false;
@@ -86,7 +79,7 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen>
   void _handleVerificationResult(Map<String, dynamic> result) {
     final success = result['success'] ?? false;
     final duplicateDetected = result['duplicateDetected'];
-    
+
     if (success) {
       if (duplicateDetected == true) {
         // Show duplicate face detected dialog
@@ -100,7 +93,7 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen>
       setState(() {
         _statusMessage = result['message'] ?? 'Face verification failed';
       });
-      
+
       // Show retry option after a delay
       Future.delayed(const Duration(seconds: 3), () {
         _showRetryDialog();
@@ -162,7 +155,9 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen>
                 style: TextStyle(fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 8),
-              const Text('• Use a different phone number to login to that account'),
+              const Text(
+                '• Use a different phone number to login to that account',
+              ),
               const Text('• Contact support if this is an error'),
               const Text('• Try again with a different face'),
             ],
@@ -202,7 +197,10 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen>
             borderRadius: BorderRadius.circular(20),
           ),
           title: const Text('Verification Failed'),
-          content: Text(_verificationResult?['message'] ?? 'Face verification failed. Please try again.'),
+          content: Text(
+            _verificationResult?['message'] ??
+                'Face verification failed. Please try again.',
+          ),
           actions: [
             TextButton(
               onPressed: () {
@@ -225,12 +223,15 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen>
     );
   }
 
-  void _proceedToNextScreen({required bool isNewUser, required Map<String, dynamic> result}) {
+  void _proceedToNextScreen({
+    required bool isNewUser,
+    required Map<String, dynamic> result,
+  }) {
     // Complete onboarding for new users
     if (isNewUser) {
       AuthService.completeOnboarding();
     }
-    
+
     // Navigate to success screen or main app
     // Replace with your actual navigation logic
     Navigator.of(context).pushReplacementNamed('/identity-active');
@@ -239,7 +240,9 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen>
   void _goBackToLogin() {
     // Navigate back to phone login screen
     // Replace with your actual navigation logic
-    Navigator.of(context).pushNamedAndRemoveUntil('/phone-login', (route) => false);
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil('/phone-login', (route) => false);
   }
 
   @override
@@ -247,173 +250,188 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen>
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
-              
-              // Animated verification icon
-              AnimatedBuilder(
-                animation: _animation,
-                builder: (context, child) {
-                  return Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _isVerifying ? Colors.blue.withOpacity(0.1) : 
-                             (_verificationResult?['success'] == true ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1)),
-                      border: Border.all(
-                        color: _isVerifying ? Colors.blue.withOpacity(0.3) : 
-                               (_verificationResult?['success'] == true ? Colors.green.withOpacity(0.3) : Colors.red.withOpacity(0.3)),
-                        width: 2,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(),
+
+                // Animated verification icon
+                AnimatedBuilder(
+                  animation: _animation,
+                  builder: (context, child) {
+                    return Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color:
+                            _isVerifying
+                                ? Colors.blue.withOpacity(0.1)
+                                : (_verificationResult?['success'] == true
+                                    ? Colors.green.withOpacity(0.1)
+                                    : Colors.red.withOpacity(0.1)),
+                        border: Border.all(
+                          color:
+                              _isVerifying
+                                  ? Colors.blue.withOpacity(0.3)
+                                  : (_verificationResult?['success'] == true
+                                      ? Colors.green.withOpacity(0.3)
+                                      : Colors.red.withOpacity(0.3)),
+                          width: 2,
+                        ),
                       ),
-                    ),
-                    child: _isVerifying
-                        ? Transform.rotate(
-                            angle: _animation.value * 2 * 3.14159,
-                            child: const Icon(
-                              Icons.face_retouching_natural,
-                              size: 60,
-                              color: Colors.blue,
-                            ),
-                          )
-                        : Icon(
-                            _verificationResult?['success'] == true ? Icons.check_circle : Icons.error,
-                            size: 60,
-                            color: _verificationResult?['success'] == true ? Colors.green : Colors.red,
-                          ),
-                  );
-                },
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Status title
-              Text(
-                _isVerifying ? 'Under Verification' : 
-                (_verificationResult?['success'] == true ? 'Verification Complete' : 'Verification Failed'),
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                      child:
+                          _isVerifying
+                              ? Transform.rotate(
+                                angle: _animation.value * 2 * 3.14159,
+                                child: const Icon(
+                                  Icons.face_retouching_natural,
+                                  size: 60,
+                                  color: Colors.blue,
+                                ),
+                              )
+                              : Icon(
+                                _verificationResult?['success'] == true
+                                    ? Icons.check_circle
+                                    : Icons.error,
+                                size: 60,
+                                color:
+                                    _verificationResult?['success'] == true
+                                        ? Colors.green
+                                        : Colors.red,
+                              ),
+                    );
+                  },
                 ),
-                textAlign: TextAlign.center,
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Status message
-              Text(
-                _statusMessage,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              
-              if (_isVerifying) ...[
-                const SizedBox(height: 24),
-                
-                // Progress indicator
+
+                const SizedBox(height: 32),
+
+                // Status title
                 Text(
-                  _currentAttempt > 0 ? 'Attempt $_currentAttempt of $_maxAttempts' : 'Processing...',
+                  _isVerifying
+                      ? 'Under Verification'
+                      : (_verificationResult?['success'] == true
+                          ? 'Verification Complete'
+                          : 'Verification Failed'),
                   style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
+                  textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 16),
-                
-                // Linear progress indicator
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: _currentAttempt / _maxAttempts,
-                    backgroundColor: Colors.grey.shade300,
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
-                    minHeight: 6,
-                  ),
+
+                // Status message
+                Text(
+                  _statusMessage,
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  textAlign: TextAlign.center,
                 ),
-                
-                const SizedBox(height: 24),
-                
-                // Information text
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.blue.shade100),
+
+                if (_isVerifying) ...[
+                  const SizedBox(height: 24),
+
+                  // Progress indicator
+                  Text(
+                    _currentAttempt > 0
+                        ? 'Attempt $_currentAttempt of $_maxAttempts'
+                        : 'Processing...',
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
-                  child: const Column(
-                    children: [
-                      Text(
-                        'Please wait while we verify your face scan',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.blue,
-                        ),
-                        textAlign: TextAlign.center,
+
+                  const SizedBox(height: 16),
+
+                  // Linear progress indicator
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: _currentAttempt / _maxAttempts,
+                      backgroundColor: Colors.grey.shade300,
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Colors.blue,
                       ),
-                      SizedBox(height: 8),
-                      Text(
-                        'This usually takes less than a minute',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.blue,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                      minHeight: 6,
+                    ),
                   ),
-                ),
-              ],
-              
-              const Spacer(),
-              
-              if (!_isVerifying && _verificationResult?['success'] != true) ...[
-                // Action buttons for failed verification
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(); // Go back to face scan
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+
+                  const SizedBox(height: 24),
+
+                  // Information text
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.blue.shade100),
+                    ),
+                    child: const Column(
+                      children: [
+                        Text(
+                          'Please wait while we verify your face scan',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.blue,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'This usually takes less than a minute',
+                          style: TextStyle(fontSize: 12, color: Colors.blue),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                const Spacer(),
+
+                if (!_isVerifying &&
+                    _verificationResult?['success'] != true) ...[
+                  // Action buttons for failed verification
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Go back to face scan
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Try Face Scan Again',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  TextButton(
+                    onPressed: _goBackToLogin,
                     child: const Text(
-                      'Try Face Scan Again',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      'Back to Login',
+                      style: TextStyle(color: Colors.grey, fontSize: 16),
                     ),
                   ),
-                ),
-                
-                const SizedBox(height: 12),
-                
-                TextButton(
-                  onPressed: _goBackToLogin,
-                  child: const Text(
-                    'Back to Login',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

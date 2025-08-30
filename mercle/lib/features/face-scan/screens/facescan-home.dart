@@ -20,6 +20,32 @@ class FaceScanSetup extends StatefulWidget {
 class _FaceScanSetupState extends State<FaceScanSetup> {
   final PageController _pageController = PageController(viewportFraction: 0.85);
   bool _isLoading = false;
+  
+  /// Validate current token and refresh if needed
+  Future<bool> _validateAndRefreshToken() async {
+    try {
+      // Try to get current user to validate token
+      final userResult = await AuthService.getCurrentUser();
+      
+      if (userResult['success'] == true) {
+        print('✅ Token is valid');
+        return true;
+      } else if (userResult['requiresAuth'] == true) {
+        print('❌ Token expired or invalid');
+        // Show dialog asking user to re-authenticate
+        if (mounted) {
+          _showTokenExpiredDialog();
+        }
+        return false;
+      } else {
+        print('⚠️ Unknown token validation error: ${userResult['message']}');
+        return false;
+      }
+    } catch (e) {
+      print('❌ Error validating token: $e');
+      return false;
+    }
+  }
 
   /// Launch face liveness webview and handle the complete verification flow
   Future<void> _startFaceScan() async {
@@ -30,6 +56,13 @@ class _FaceScanSetupState extends State<FaceScanSetup> {
     });
 
     try {
+      // Step 0: Validate token first
+      final tokenValidation = await _validateAndRefreshToken();
+      if (!tokenValidation) {
+        _showErrorDialog('Authentication expired. Please login again.');
+        return;
+      }
+      
       // Step 1: Create liveness session
       final sessionResult = await AuthService.createLivenessSession();
 
@@ -212,6 +245,37 @@ class _FaceScanSetupState extends State<FaceScanSetup> {
               ),
             ],
           ),
+    );
+  }
+
+  /// Show token expired dialog with re-authentication option
+  void _showTokenExpiredDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.access_time, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Session Expired'),
+          ],
+        ),
+        content: const Text(
+          'Your authentication session has expired. Please login again to continue.',
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Clear auth data and navigate to login
+              AuthService.clearAuthData();
+              Navigator.pushReplacementNamed(context, '/phone-verification');
+            },
+            child: const Text('Login Again'),
+          ),
+        ],
+      ),
     );
   }
 

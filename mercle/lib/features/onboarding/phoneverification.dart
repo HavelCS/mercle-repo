@@ -46,7 +46,10 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
 
     // Store credentials in provider
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    userProvider.setTempCredentials(_phoneController.text, _inviteCodeController.text);
+    userProvider.setTempCredentials(
+      _phoneController.text,
+      _inviteCodeController.text,
+    );
 
     final result = await AuthService.startOTP(
       _phoneController.text,
@@ -82,150 +85,154 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: Padding(
-        padding: EdgeInsets.only(left: 29.w, right: 29.w, top: 110.h),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              children: [
-                Center(child: SvgPicture.asset("assets/images/logo.svg")),
-                SizedBox(height: 110.h),
-                Text(
-                  'Enter your details',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 44.sp,
-                    fontFamily: 'HandjetRegular',
-                    fontWeight: FontWeight.w400,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.only(left: 29.w, right: 29.w, top: 110.h),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                children: [
+                  Center(child: SvgPicture.asset("assets/images/logo.svg")),
+                  SizedBox(height: 110.h),
+                  Text(
+                    'Enter your details',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 44.sp,
+                      fontFamily: 'HandjetRegular',
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
-                ),
-                SizedBox(height: 16.h),
-                Text(
-                  'We\'ll send an OTP to your number,\nand validate your invite code.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: const Color(0xFF888888),
-                    fontSize: 16.sp,
-                    fontFamily: 'Geist',
-                    fontWeight: FontWeight.w400,
-                    height: 1.45.h,
-                    letterSpacing: -0.16,
+                  SizedBox(height: 16.h),
+                  Text(
+                    'We\'ll send an OTP to your number,\nand validate your invite code.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: const Color(0xFF888888),
+                      fontSize: 16.sp,
+                      fontFamily: 'Geist',
+                      fontWeight: FontWeight.w400,
+                      height: 1.45.h,
+                      letterSpacing: -0.16,
+                    ),
                   ),
-                ),
-                SizedBox(height: 32.h),
+                  SizedBox(height: 32.h),
 
-                // Error message
-                if (_errorMessage != null)
+                  // Error message
+                  if (_errorMessage != null)
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12.w),
+                      margin: EdgeInsets.only(bottom: 16.h),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        border: Border.all(color: Colors.red),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+
+                  // Phone number input
                   Container(
                     width: double.infinity,
-                    padding: EdgeInsets.all(12.w),
-                    margin: EdgeInsets.only(bottom: 16.h),
+                    height: 56.h,
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      border: Border.all(color: Colors.red),
-                      borderRadius: BorderRadius.circular(8.r),
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
-                    child: Text(
-                      _errorMessage!,
-                      style: const TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
+                    child: TextField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        hintText: '+1234567890',
+                        hintStyle: TextStyle(color: Colors.grey),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                      ),
+                      onChanged: (value) {
+                        if (_errorMessage != null) {
+                          setState(() {
+                            _errorMessage = null;
+                          });
+                        }
+                      },
                     ),
                   ),
 
-                // Phone number input
-                Container(
-                  width: double.infinity,
-                  height: 56.h,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: TextField(
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      hintText: '+1234567890',
-                      hintStyle: TextStyle(color: Colors.grey),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
-                    ),
-                    onChanged: (value) {
-                      if (_errorMessage != null) {
-                        setState(() {
-                          _errorMessage = null;
-                        });
-                      }
-                    },
-                  ),
-                ),
-                
-                SizedBox(height: 16.h),
-                
-                // Invite code input
-                Container(
-                  width: double.infinity,
-                  height: 56.h,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: TextField(
-                    controller: _inviteCodeController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      hintText: 'Invite Code',
-                      hintStyle: TextStyle(color: Colors.grey),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
-                    ),
-                    onChanged: (value) {
-                      if (_errorMessage != null) {
-                        setState(() {
-                          _errorMessage = null;
-                        });
-                      }
-                    },
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding: EdgeInsets.only(bottom: 98.h),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56.h,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _sendOTP,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
+                  SizedBox(height: 16.h),
+
+                  // Invite code input
+                  Container(
+                    width: double.infinity,
+                    height: 56.h,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
                       borderRadius: BorderRadius.circular(12.r),
                     ),
+                    child: TextField(
+                      controller: _inviteCodeController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        hintText: 'Invite Code',
+                        hintStyle: TextStyle(color: Colors.grey),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                      ),
+                      onChanged: (value) {
+                        if (_errorMessage != null) {
+                          setState(() {
+                            _errorMessage = null;
+                          });
+                        }
+                      },
+                    ),
                   ),
-                  child:
-                      _isLoading
-                          ? const CircularProgressIndicator(color: Colors.black)
-                          : const Text(
-                            'Send OTP',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                ],
+              ),
+              Padding(
+                padding: EdgeInsets.only(bottom: 98.h),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 56.h,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _sendOTP,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                    child:
+                        _isLoading
+                            ? const CircularProgressIndicator(
+                              color: Colors.black,
+                            )
+                            : const Text(
+                              'Send OTP',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

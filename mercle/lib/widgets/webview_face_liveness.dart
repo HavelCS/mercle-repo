@@ -54,7 +54,7 @@ class WebViewFaceLiveness extends StatefulWidget {
 }
 
 class _WebViewFaceLivenessState extends State<WebViewFaceLiveness> {
-  late final WebViewController controller;
+  WebViewController? controller;
   bool isLoading = true;
   String? error;
 
@@ -167,8 +167,10 @@ class _WebViewFaceLivenessState extends State<WebViewFaceLiveness> {
 
   /// Set up JavaScript listener for Face Liveness results
   void _setupResultListener() {
+    if (controller == null) return;
+    
     // Inject JavaScript to set up a listener for results
-    controller.runJavaScript('''
+    controller!.runJavaScript('''
       window.addEventListener('message', function(event) {
         if (event.data && typeof event.data === 'string') {
           try {
@@ -241,7 +243,7 @@ class _WebViewFaceLivenessState extends State<WebViewFaceLiveness> {
         fit: StackFit.expand,
         children: [
           // WebView fills entire body
-          WebViewWidget(controller: controller),
+          if (controller != null) WebViewWidget(controller: controller!),
           if (!isLoading && error == null)
             Positioned(
               top: MediaQuery.of(context).padding.top + 16,

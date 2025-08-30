@@ -60,7 +60,7 @@ class _WebViewFaceLivenessState extends State<WebViewFaceLiveness> {
 
   // Your deployed React Face Liveness app URL
   static const String _faceLivenessUrl =
-      'https://face-liveness-react-io419t8ng.vercel.app';
+      'https://face-liveness-react-qdq4tm1t5.vercel.app';
   
   String _faceLivenessUrlWithToken = '';
   bool _urlInitialized = false;
@@ -72,13 +72,18 @@ class _WebViewFaceLivenessState extends State<WebViewFaceLiveness> {
     _initializeUrlWithToken();
   }
 
-  /// Initialize URL with authentication token
+  /// Initialize URL with authentication token and sessionId
   Future<void> _initializeUrlWithToken() async {
     try {
       final token = await AuthService.getToken();
-      if (token != null) {
+      final sessionId = widget.sessionId;
+      
+      if (token != null && sessionId != null) {
+        _faceLivenessUrlWithToken = '$_faceLivenessUrl?token=${Uri.encodeComponent(token)}&sessionId=${Uri.encodeComponent(sessionId)}';
+        print('🔑 Face liveness URL with token and sessionId initialized');
+      } else if (token != null) {
         _faceLivenessUrlWithToken = '$_faceLivenessUrl?token=${Uri.encodeComponent(token)}';
-        print('🔑 Face liveness URL with token initialized');
+        print('🔑 Face liveness URL with token initialized (no sessionId)');
       } else {
         _faceLivenessUrlWithToken = _faceLivenessUrl;
         print('⚠️ No auth token available, using URL without token');

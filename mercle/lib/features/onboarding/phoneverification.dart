@@ -17,8 +17,8 @@ class PhoneVerificationScreen extends StatefulWidget {
 }
 
 class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _inviteCodeController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController(text: '+911234567890');
+  final TextEditingController _inviteCodeController = TextEditingController(text: 'BETA001');
   bool _isLoading = false;
   String? _errorMessage;
 
